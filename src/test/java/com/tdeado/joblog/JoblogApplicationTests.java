@@ -23,7 +23,6 @@ class JoblogApplicationTests {
             dataMap.put("tomorrow", "新框架数据中心开发");
             Configuration configuration = new Configuration(new Version("2.3.0"));
             configuration.setDefaultEncoding("utf-8");
-
             /**
              * 以下是两种指定ftl文件所在目录路径的方式，注意这两种方式都是
              * 指定ftl文件所在目录的路径，而不是ftl文件的路径
