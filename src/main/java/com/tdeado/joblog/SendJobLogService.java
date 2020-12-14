@@ -14,7 +14,6 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class SendJobLogService {
             Writer out = new BufferedWriter(new OutputStreamWriter(byteArrayOutputStream, "utf-8"), 10240);
             template.process(dataMap, out);
             out.close();
-            messageHelper.addAttachment(LocalDate.now().toString()+"."+name+".docx",new ByteArrayResource(byteArrayOutputStream.toByteArray()));
+            messageHelper.addAttachment(LocalDate.now().toString()+"."+name+".doc",new ByteArrayResource(byteArrayOutputStream.toByteArray()));
             byteArrayOutputStream.close();
             StringWriter stringWriter = new StringWriter();
             template = configuration.getTemplate("joblog_html.ftl", "utf-8");
@@ -65,7 +64,7 @@ public class SendJobLogService {
             template.process(dataMap, outHtml);
             stringWriter.flush();
             stringWriter.close();
-            messageHelper.setText(stringWriter.toString(),true);
+            messageHelper.setText(stringWriter.toString().replace("<w:br/>","<br/>"),true);
 
             mailSender.send(mimeMessage);
             System.err.println("日志发送成功 "+LocalDate.now().toString());
