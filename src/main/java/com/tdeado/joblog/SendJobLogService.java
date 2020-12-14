@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeUtility;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,20 +23,24 @@ import java.util.Map;
 public class SendJobLogService {
     @Autowired
     JavaMailSender mailSender;
+    @Autowired
+    ConfigProperties configProperties;
 
-    public boolean send(String complete,String issue,String tomorrow) throws MessagingException {
+    public boolean send(String complete,String issue,String tomorrow) throws MessagingException, UnsupportedEncodingException {
         //复杂邮件
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage,true);
-        messageHelper.setFrom("2850755733@qq.com");
-        messageHelper.setTo("yancy@tdeado.com");
-        messageHelper.setSubject(LocalDate.now().toString()+".杨哲");
-
+        messageHelper.setFrom(configProperties.getMailFrom());
+        for (String s : configProperties.getMailTo().split(",")) {
+            messageHelper.addTo(s);
+        }
+        String name=new String(configProperties.getName().getBytes("ISO-8859-1"), "utf-8");
+        messageHelper.setSubject(LocalDate.now().toString()+"."+name);
         Map<String,Object> dataMap = new HashMap<>();
         try {
-            dataMap.put("complete", "修复一些bug\n修复前端问题");
-            dataMap.put("issue", "无");
-            dataMap.put("tomorrow", "新框架数据中心开发");
+            dataMap.put("complete", complete);
+            dataMap.put("issue", issue);
+            dataMap.put("tomorrow", tomorrow);
             Configuration configuration = new Configuration(new Version("2.3.0"));
             configuration.setDefaultEncoding("utf-8");
             /**
@@ -51,7 +57,7 @@ public class SendJobLogService {
             Writer out = new BufferedWriter(new OutputStreamWriter(byteArrayOutputStream, "utf-8"), 10240);
             template.process(dataMap, out);
             out.close();
-            messageHelper.addAttachment(LocalDate.now().toString()+".杨哲.docx",new ByteArrayResource(byteArrayOutputStream.toByteArray()));
+            messageHelper.addAttachment(LocalDate.now().toString()+"."+name+".docx",new ByteArrayResource(byteArrayOutputStream.toByteArray()));
             byteArrayOutputStream.close();
             StringWriter stringWriter = new StringWriter();
             template = configuration.getTemplate("joblog_html.ftl", "utf-8");
@@ -62,6 +68,7 @@ public class SendJobLogService {
             messageHelper.setText(stringWriter.toString(),true);
 
             mailSender.send(mimeMessage);
+            System.err.println("日志发送成功 "+LocalDate.now().toString());
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,5 +76,13 @@ public class SendJobLogService {
         }
 
 
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.err.println(MimeUtility.encodeText("杨哲"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 }
